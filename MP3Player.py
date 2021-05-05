@@ -14,25 +14,33 @@ class MP3Player(QWidget):
         self.startTimeLabel = QLabel('00:00')
         self.endTimeLabel = QLabel('00:00')
         self.slider = QSlider(Qt.Horizontal, self)
-        self.playBtn = QPushButton('播放', self)
-        self.prevBtn = QPushButton('上一曲', self)
-        self.nextBtn = QPushButton('下一曲', self)
-        self.openBtn = QPushButton('打开文件夹', self)
+        self.PlayModeBtn = QPushButton(self)
+        self.playBtn = QPushButton(self)
+        self.prevBtn = QPushButton(self)
+        self.nextBtn = QPushButton(self)
+        self.openBtn = QPushButton(self)
         self.musicList = QListWidget()
-        self.modeCom = QComboBox()
-        self.modeCom.addItem('顺序播放')
-        self.modeCom.addItem('单曲循环')
-        self.modeCom.addItem('随机播放')
         self.song_formats = ['mp3', 'm4a', 'flac', 'wav', 'ogg']
         self.songs_list = []
         self.cur_playing_song = ''
         self.is_pause = True
         self.player = QMediaPlayer()
         self.is_switching = False
+        self.playMode = 0
         self.settingfilename = 'config.ini'
-        self.authorLabel = QLabel('Mculover666')
-        self.textLable = QLabel('星光不问赶路人,时光不负有心人')
-        self.versionLabel = QLabel('v1.0.0')
+        self.textLable = QLabel('前进的路上，也要记得欣赏沿途的风景呀!')
+        self.infoLabel = QLabel('Mculover666 v1.0.0')
+
+        self.playBtn.setStyleSheet("QPushButton{border-image: url(resource/image/play.png)}")
+        self.playBtn.setFixedSize(48, 48)
+        self.nextBtn.setStyleSheet("QPushButton{border-image: url(resource/image/next.png)}")
+        self.nextBtn.setFixedSize(48, 48)
+        self.prevBtn.setStyleSheet("QPushButton{border-image: url(resource/image/prev.png)}")
+        self.prevBtn.setFixedSize(48, 48)
+        self.openBtn.setStyleSheet("QPushButton{border-image: url(resource/image/open.png)}")
+        self.openBtn.setFixedSize(24, 24)
+        self.PlayModeBtn.setStyleSheet("QPushButton{border-image: url(resource/image/sequential.png)}")
+        self.PlayModeBtn.setFixedSize(24, 24)
 
         self.timer = QTimer(self)
         self.timer.start(1000)
@@ -44,10 +52,12 @@ class MP3Player(QWidget):
         self.hBoxSlider.addWidget(self.endTimeLabel)
 
         self.hBoxButton = QHBoxLayout()
+        self.hBoxButton.addWidget(self.PlayModeBtn)
+        self.hBoxButton.addStretch(1)
+        self.hBoxButton.addWidget(self.prevBtn)
         self.hBoxButton.addWidget(self.playBtn)
         self.hBoxButton.addWidget(self.nextBtn)
-        self.hBoxButton.addWidget(self.prevBtn)
-        self.hBoxButton.addWidget(self.modeCom)
+        self.hBoxButton.addStretch(1)
         self.hBoxButton.addWidget(self.openBtn)
 
         self.vBoxControl = QVBoxLayout()
@@ -55,11 +65,9 @@ class MP3Player(QWidget):
         self.vBoxControl.addLayout(self.hBoxButton)
 
         self.hBoxAbout = QHBoxLayout()
-        self.hBoxAbout.addWidget(self.authorLabel)
-        self.hBoxAbout.addStretch(1)
         self.hBoxAbout.addWidget(self.textLable)
         self.hBoxAbout.addStretch(1)
-        self.hBoxAbout.addWidget(self.versionLabel)
+        self.hBoxAbout.addWidget(self.infoLabel)
 
         self.vboxMain = QVBoxLayout()
         self.vboxMain.addWidget(self.musicList)
@@ -74,6 +82,7 @@ class MP3Player(QWidget):
         self.nextBtn.clicked.connect(self.nextMusic)
         self.musicList.itemDoubleClicked.connect(self.doubleClicked)
         self.slider.sliderMoved[int].connect(lambda: self.player.setPosition(self.slider.value()))
+        self.PlayModeBtn.clicked.connect(self.playModeSet)
 
         self.loadingSetting()
 
@@ -84,7 +93,7 @@ class MP3Player(QWidget):
         self.resize(600, 400)
         self.center()
         self.setWindowTitle('音乐播放器')   
-        self.setWindowIcon(QIcon('resource/favicon.ico'))
+        self.setWindowIcon(QIcon('resource/image/favicon.ico'))
         self.show()
         
     # 窗口显示居中
@@ -105,7 +114,7 @@ class MP3Player(QWidget):
             self.slider.setSliderPosition(0)
             self.updateSetting()
             self.is_pause = True
-            self.playBtn.setText('播放')
+            self.playBtn.setStyleSheet("QPushButton{border-image: url(resource/image/play.png)}")
     
     # 显示音乐列表
     def showMusicList(self):
@@ -137,11 +146,11 @@ class MP3Player(QWidget):
         if self.is_pause or self.is_switching:
                 self.player.play()
                 self.is_pause = False
-                self.playBtn.setText('暂停')
+                self.playBtn.setStyleSheet("QPushButton{border-image: url(resource/image/pause.png)}")
         elif (not self.is_pause) and (not self.is_switching):
                 self.player.pause()
                 self.is_pause = True
-                self.playBtn.setText('播放')
+                self.playBtn.setStyleSheet("QPushButton{border-image: url(resource/image/play.png)}")
  	
     # 上一曲
     def prevMusic(self):
@@ -187,13 +196,13 @@ class MP3Player(QWidget):
         self.startTimeLabel.setText(time.strftime('%M:%S', time.localtime(self.player.position()/1000)))
         self.endTimeLabel.setText(time.strftime('%M:%S', time.localtime(self.player.duration()/1000)))
         # 顺序播放
-        if (self.modeCom.currentIndex() == 0) and (not self.is_pause) and (not self.is_switching):
+        if (self.playMode == 0) and (not self.is_pause) and (not self.is_switching):
             if self.musicList.count() == 0:
                 return
             if self.player.position() == self.player.duration():
                 self.nextMusic()
         # 单曲循环
-        elif (self.modeCom.currentIndex() == 1) and (not self.is_pause) and (not self.is_switching):
+        elif (self.playMode == 1) and (not self.is_pause) and (not self.is_switching):
             if self.musicList.count() == 0:
                 return
             if self.player.position() == self.player.duration():
@@ -203,7 +212,7 @@ class MP3Player(QWidget):
                 self.playMusic()
                 self.is_switching = False
         # 随机播放
-        elif (self.modeCom.currentIndex() == 2) and (not self.is_pause) and (not self.is_switching):
+        elif (self.playMode == 2) and (not self.is_pause) and (not self.is_switching):
             if self.musicList.count() == 0:
                 return
             if self.player.position() == self.player.duration():
@@ -232,6 +241,21 @@ class MP3Player(QWidget):
         self.cur_path = config.get('MP3Player', 'PATH')
         self.showMusicList()
     
+    # 播放模式设置
+    def playModeSet(self):
+        # 设置为单曲循环模式
+        if self.playMode == 0:
+            self.playMode = 1
+            self.PlayModeBtn.setStyleSheet("QPushButton{border-image: url(resource/image/circulation.png)}")
+        # 设置为随机播放模式
+        elif self.playMode == 1:
+            self.playMode = 2
+            self.PlayModeBtn.setStyleSheet("QPushButton{border-image: url(resource/image/random.png)}")
+        # 设置为顺序播放模式
+        elif self.playMode == 2:
+            self.playMode = 0
+            self.PlayModeBtn.setStyleSheet("QPushButton{border-image: url(resource/image/sequential.png)}")
+
     # 确认用户是否要真正退出
     def closeEvent(self, event):
         reply = QMessageBox.question(self, 'Message',
