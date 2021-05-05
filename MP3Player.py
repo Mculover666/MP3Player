@@ -84,7 +84,7 @@ class MP3Player(QWidget):
         self.resize(600, 400)
         self.center()
         self.setWindowTitle('音乐播放器')   
-        self.setWindowIcon(QIcon('resource/music.png'))
+        self.setWindowIcon(QIcon('resource/favicon.ico'))
         self.show()
         
     # 窗口显示居中
