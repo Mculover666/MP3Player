@@ -5,7 +5,7 @@
 MP3 player
  
 author: Mculover666
-version: v1.0.0
+version: v2.0.0
 """
  
 import sys

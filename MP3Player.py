@@ -29,7 +29,7 @@ class MP3Player(QWidget):
         self.playMode = 0
         self.settingfilename = 'config.ini'
         self.textLable = QLabel('前进的路上，也要记得欣赏沿途的风景呀!')
-        self.infoLabel = QLabel('Mculover666 v1.0.0')
+        self.infoLabel = QLabel('Mculover666 v2.0.0')
 
         self.playBtn.setStyleSheet("QPushButton{border-image: url(resource/image/play.png)}")
         self.playBtn.setFixedSize(48, 48)
